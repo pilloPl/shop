@@ -1,9 +1,9 @@
 package io.pillopl.eventsource.shop;
 
 import io.pillopl.eventsource.shop.boundary.ShopItems;
+import io.pillopl.eventsource.shop.domain.commands.Order;
 import io.pillopl.eventsource.shop.domain.commands.Command;
 import io.pillopl.eventsource.shop.domain.commands.MarkPaymentTimeout;
-import io.pillopl.eventsource.shop.domain.commands.Order;
 import io.pillopl.eventsource.shop.domain.commands.Pay;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +15,12 @@ import org.springframework.cloud.stream.messaging.Processor;
 import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Random;
+import java.util.UUID;
 
 @SpringBootApplication
 @EnableAspectJAutoProxy(proxyTargetClass = true)
@@ -26,9 +32,20 @@ public class Application {
     @Autowired
     ShopItems shopItems;
 
+    Random random = new Random();
+
     public static void main(String[] args) {
         SpringApplication application = new SpringApplication(Application.class);
         application.run(args);
+    }
+
+    @Scheduled(fixedRate = 8000)
+    public void randomItems() {
+        final UUID uuid = UUID.randomUUID();
+        shopItems.order(new Order(uuid, BigDecimal.TEN, Instant.now()));
+        if (random.nextBoolean()){
+            shopItems.pay(new Pay(uuid, Instant.now()));
+        }
     }
 
     @StreamListener(Sink.INPUT)
