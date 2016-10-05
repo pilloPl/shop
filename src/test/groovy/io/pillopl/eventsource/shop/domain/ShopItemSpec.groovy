@@ -1,12 +1,12 @@
 package io.pillopl.eventsource.shop.domain
 
 import io.pillopl.eventsource.shop.domain.events.ItemPaid
-import io.pillopl.eventsource.shop.domain.events.ItemBought
+import io.pillopl.eventsource.shop.domain.events.ItemOrdered
 import io.pillopl.eventsource.shop.domain.events.ItemPaymentTimeout
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static io.pillopl.eventsource.shop.ShopItemFixture.bought
+import static io.pillopl.eventsource.shop.ShopItemFixture.ordered
 import static io.pillopl.eventsource.shop.ShopItemFixture.initialized
 import static io.pillopl.eventsource.shop.ShopItemFixture.paid
 import static io.pillopl.eventsource.shop.ShopItemFixture.withTimeout
@@ -21,44 +21,43 @@ class ShopItemSpec extends Specification {
     private static final BigDecimal ANY_PRICE = BigDecimal.TEN
     private final UUID uuid = UUID.randomUUID()
 
-    def 'should emit item bought event when buying initialized item'() {
+    def 'should emit item ordered event when ordering initialized item'() {
         when:
-            ShopItem item = initialized().buy(uuid, now(), PAYMENT_DEADLINE_IN_HOURS, ANY_PRICE)
+            ShopItem item = initialized().order(uuid, now(), PAYMENT_DEADLINE_IN_HOURS, ANY_PRICE)
         then:
             item.getUncommittedChanges().size() == 1
-            item.getUncommittedChanges().head().type() == ItemBought.TYPE
+            item.getUncommittedChanges().head().type() == ItemOrdered.TYPE
     }
 
-    def 'should calculate #deadline when buying at #buyingAt and expiration in days #expiresIn'() {
+    def 'should calculate #deadline when ordering at #orderingAt and expiration in days #expiresIn'() {
         when:
-            ShopItem item = initialized().buy(uuid, parse(buyingAt), expiresIn, ANY_PRICE)
+            ShopItem item = initialized().order(uuid, parse(orderingAt), expiresInMinutes, ANY_PRICE)
         then:
-            ((ItemBought) item.getUncommittedChanges().head()).paymentTimeoutDate == parse(deadline)
+            ((ItemOrdered) item.getUncommittedChanges().head()).paymentTimeoutDate == parse(deadline)
         where:
-            buyingAt               | expiresIn || deadline
-            "1995-10-23T10:12:35Z" | 0         || "1995-10-23T10:12:35Z"
-            "1995-10-23T10:12:35Z" | 1         || "1995-10-23T11:12:35Z"
-            "1995-10-23T10:12:35Z" | 2         || "1995-10-23T12:12:35Z"
-            "1995-10-23T10:12:35Z" | 20        || "1995-10-24T06:12:35Z"
-            "1995-10-23T10:12:35Z" | 24        || "1995-10-24T10:12:35Z"
-            "1995-10-23T10:12:35Z" | 48        || "1995-10-25T10:12:35Z"
+            orderingAt             | expiresInMinutes || deadline
+            "1995-10-23T10:12:35Z" | 0                || "1995-10-23T10:12:35Z"
+            "1995-10-23T10:12:35Z" | 1                || "1995-10-23T10:13:35Z"
+            "1995-10-23T10:12:35Z" | 2                || "1995-10-23T10:14:35Z"
+            "1995-10-23T10:12:35Z" | 20               || "1995-10-23T10:32:35Z"
+            "1995-10-23T10:12:35Z" | 24               || "1995-10-23T10:36:35Z"
     }
 
     def 'Payment expiration date cannot be in the past'() {
         given:
             ShopItem item = initialized()
         when:
-            item.buy(uuid, now(), -1, ANY_PRICE)
+            item.order(uuid, now(), -1, ANY_PRICE)
         then:
             Exception e = thrown(IllegalArgumentException)
-            e.message.contains("Payment timeout day is before buying date")
+            e.message.contains("Payment timeout day is before ordering date")
     }
 
-    def 'buying an item should be idempotent'() {
+    def 'ordering an item should be idempotent'() {
         given:
-            ShopItem item = bought(uuid)
+            ShopItem item = ordered(uuid)
         when:
-            item.buy(uuid, now(), PAYMENT_DEADLINE_IN_HOURS, ANY_PRICE)
+            item.order(uuid, now(), PAYMENT_DEADLINE_IN_HOURS, ANY_PRICE)
         then:
             item.getUncommittedChanges().isEmpty()
     }
@@ -81,9 +80,9 @@ class ShopItemSpec extends Specification {
             thrown(IllegalStateException)
     }
 
-    def 'should emit item paid event when paying for bought item'() {
+    def 'should emit item paid event when paying for ordered item'() {
         when:
-            ShopItem item = bought(uuid).pay(now())
+            ShopItem item = ordered(uuid).pay(now())
         then:
             item.getUncommittedChanges().size() == 1
             item.getUncommittedChanges().head().type() == ItemPaid.TYPE
@@ -100,7 +99,7 @@ class ShopItemSpec extends Specification {
 
     def 'should emit payment timeout event when marking item as payment missing'() {
         when:
-            ShopItem item = bought(uuid).markTimeout(now())
+            ShopItem item = ordered(uuid).markTimeout(now())
         then:
             item.getUncommittedChanges().size() == 1
             item.getUncommittedChanges().head().type() == ItemPaymentTimeout.TYPE

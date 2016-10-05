@@ -11,7 +11,7 @@ import java.util.UUID;
 public class PublishChannel {
 
     @Publisher(channel = Source.OUTPUT)
-    public String send(String payload, @Header("uuid") UUID aggregateUUID) {
+    public String send(String payload, @Header UUID uuid) {
         return payload;
     }
 }

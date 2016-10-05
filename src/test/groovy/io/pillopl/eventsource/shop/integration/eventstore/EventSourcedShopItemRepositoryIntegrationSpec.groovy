@@ -9,7 +9,7 @@ import spock.lang.Subject
 import java.time.Instant
 
 import static io.pillopl.eventsource.shop.ShopItemFixture.initialized
-import static io.pillopl.eventsource.shop.domain.ShopItemState.BOUGHT
+import static io.pillopl.eventsource.shop.domain.ShopItemState.ORDERED
 import static io.pillopl.eventsource.shop.domain.ShopItemState.PAID
 import static java.time.LocalDate.now
 import static java.time.ZoneId.systemDefault
@@ -33,7 +33,7 @@ class EventSourcedShopItemRepositoryIntegrationSpec extends IntegrationSpec {
         given:
             ShopItem stored =
                     initialized()
-                    .buy(uuid, TODAY, PAYMENT_DEADLINE_IN_HOURS, ANY_PRICE)
+                    .order(uuid, TODAY, PAYMENT_DEADLINE_IN_HOURS, ANY_PRICE)
         when:
             shopItemRepository.save(stored)
         and:
@@ -46,7 +46,7 @@ class EventSourcedShopItemRepositoryIntegrationSpec extends IntegrationSpec {
     def 'should reconstruct item at given moment'() {
         given:
             ShopItem stored = initialized()
-                    .buy(uuid, TOMORROW, PAYMENT_DEADLINE_IN_HOURS, ANY_PRICE)
+                    .order(uuid, TOMORROW, PAYMENT_DEADLINE_IN_HOURS, ANY_PRICE)
                     .pay(DAY_AFTER_TOMORROW)
         when:
             shopItemRepository.save(stored)
@@ -55,7 +55,7 @@ class EventSourcedShopItemRepositoryIntegrationSpec extends IntegrationSpec {
             ShopItem paid = shopItemRepository.getByUUIDat(uuid, DAY_AFTER_TOMORROW)
 
         then:
-            bought.state == BOUGHT
+            bought.state == ORDERED
             paid.state == PAID
 
     }

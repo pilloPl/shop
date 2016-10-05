@@ -21,24 +21,24 @@ class ShopItemsIntegrationSpec extends IntegrationSpec {
     @Autowired
     EventStore eventStore
 
-    def 'item should wait for payment when create bought item command comes and no item yet'() {
+    def 'item should wait for payment when create ordered item command comes and no item yet'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
         then:
             ShopItem tx = shopItems.getByUUID(uuid)
-            tx.state == BOUGHT
+            tx.state == ORDERED
     }
 
-    def 'item should be paid when paying for bought item'() {
+    def 'item should be paid when paying for ordered item'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
             shopItems.pay(payItemCommand(uuid))
         then:
             ShopItem tx = shopItems.getByUUID(uuid)
             tx.state == PAID
     }
 
-    def 'cannot pay for not bought item'() {
+    def 'cannot pay for not ordered item'() {
         when:
             shopItems.pay(payItemCommand(uuid))
         then:
@@ -48,7 +48,7 @@ class ShopItemsIntegrationSpec extends IntegrationSpec {
 
     def 'item should be marked as payment timeout when payment did not come'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
             shopItems.markPaymentTimeout(markPaymentTimeoutCommand(uuid))
         then:
             ShopItem tx = shopItems.getByUUID(uuid)
@@ -57,7 +57,7 @@ class ShopItemsIntegrationSpec extends IntegrationSpec {
 
     def 'cannot mark payment missing when item already paid'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
             shopItems.pay(payItemCommand(uuid))
             shopItems.markPaymentTimeout(markPaymentTimeoutCommand(uuid))
         then:
@@ -75,7 +75,7 @@ class ShopItemsIntegrationSpec extends IntegrationSpec {
 
     def 'item should be paid when receiving missed payment'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
             shopItems.markPaymentTimeout(markPaymentTimeoutCommand(uuid))
             shopItems.pay(payItemCommand(uuid))
         then:
@@ -83,18 +83,18 @@ class ShopItemsIntegrationSpec extends IntegrationSpec {
             tx.state == PAID
     }
 
-    def 'buying an item should be idempotent'() {
+    def 'ordering an item should be idempotent'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
         then:
             ShopItem tx = shopItems.getByUUID(uuid)
-            tx.state == BOUGHT
+            tx.state == ORDERED
     }
 
     def 'marking payment as missing should be idempotent'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
             shopItems.markPaymentTimeout(markPaymentTimeoutCommand(uuid))
             shopItems.markPaymentTimeout(markPaymentTimeoutCommand(uuid))
         then:
@@ -104,7 +104,7 @@ class ShopItemsIntegrationSpec extends IntegrationSpec {
 
     def 'paying should be idempotent'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
             shopItems.pay(payItemCommand(uuid))
             shopItems.pay(payItemCommand(uuid))
         then:

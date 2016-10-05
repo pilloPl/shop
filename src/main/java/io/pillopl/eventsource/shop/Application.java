@@ -1,7 +1,7 @@
 package io.pillopl.eventsource.shop;
 
 import io.pillopl.eventsource.shop.boundary.ShopItems;
-import io.pillopl.eventsource.shop.domain.commands.Buy;
+import io.pillopl.eventsource.shop.domain.commands.Order;
 import io.pillopl.eventsource.shop.domain.commands.Command;
 import io.pillopl.eventsource.shop.domain.commands.MarkPaymentTimeout;
 import io.pillopl.eventsource.shop.domain.commands.Pay;
@@ -19,6 +19,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Random;
 import java.util.UUID;
 
 @SpringBootApplication
@@ -31,16 +32,20 @@ public class Application {
     @Autowired
     ShopItems shopItems;
 
+    Random random = new Random();
+
     public static void main(String[] args) {
         SpringApplication application = new SpringApplication(Application.class);
         application.run(args);
     }
 
-    @Scheduled(fixedRate = 5000)
-    public void anyBoughtItem() {
+    @Scheduled(fixedRate = 8000)
+    public void randomItems() {
         final UUID uuid = UUID.randomUUID();
-        shopItems.buy(new Buy(uuid, BigDecimal.TEN, Instant.now()));
-        shopItems.pay(new Pay(uuid, Instant.now()));
+        shopItems.order(new Order(uuid, BigDecimal.TEN, Instant.now()));
+        if (random.nextBoolean()){
+            shopItems.pay(new Pay(uuid, Instant.now()));
+        }
     }
 
     @StreamListener(Sink.INPUT)
@@ -48,8 +53,8 @@ public class Application {
         log.info("Received command {}", command);
         if (command instanceof MarkPaymentTimeout) {
             shopItems.markPaymentTimeout((MarkPaymentTimeout) command);
-        } else if (command instanceof Buy) {
-            shopItems.buy((Buy) command);
+        } else if (command instanceof Order) {
+            shopItems.order((Order) command);
         } else if (command instanceof Pay) {
             shopItems.pay((Pay) command);
         }

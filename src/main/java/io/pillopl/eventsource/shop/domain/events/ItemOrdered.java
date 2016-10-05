@@ -11,9 +11,9 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ItemBought implements DomainEvent {
+public class ItemOrdered implements DomainEvent {
 
-    public static final String TYPE = "item.bought";
+    public static final String TYPE = "item.ordered";
 
     private UUID uuid;
     private Instant when;

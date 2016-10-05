@@ -11,7 +11,7 @@ import java.util.UUID;
         include = JsonTypeInfo.As.PROPERTY,
         property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(name = ItemBought.TYPE, value = ItemBought.class),
+        @JsonSubTypes.Type(name = ItemOrdered.TYPE, value = ItemOrdered.class),
         @JsonSubTypes.Type(name = ItemPaymentTimeout.TYPE, value = ItemPaymentTimeout.class),
         @JsonSubTypes.Type(name = ItemPaid.TYPE, value = ItemPaid.class)
 })

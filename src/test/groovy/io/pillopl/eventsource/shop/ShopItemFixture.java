@@ -22,29 +22,29 @@ public class ShopItemFixture {
         return new ShopItem(null, ImmutableList.of(), ShopItemState.INITIALIZED);
     }
 
-    public static ShopItem bought(UUID uuid) {
+    public static ShopItem ordered(UUID uuid) {
         return initialized()
-                .buy(uuid, ANY_TIME, ANY_NUMBER_OF_HOURS_TO_PAYMENT_TIMEOUT, ANY_PRICE)
+                .order(uuid, ANY_TIME, ANY_NUMBER_OF_HOURS_TO_PAYMENT_TIMEOUT, ANY_PRICE)
                 .markChangesAsCommitted();
     }
 
     public static ShopItem paid(UUID uuid) {
         return initialized()
-                .buy(uuid, now(), ANY_NUMBER_OF_HOURS_TO_PAYMENT_TIMEOUT, ANY_PRICE)
+                .order(uuid, now(), ANY_NUMBER_OF_HOURS_TO_PAYMENT_TIMEOUT, ANY_PRICE)
                 .pay(now())
                 .markChangesAsCommitted();
     }
 
     public static ShopItem withTimeout(UUID uuid) {
         return initialized()
-                .buy(uuid, now(), ANY_NUMBER_OF_HOURS_TO_PAYMENT_TIMEOUT, ANY_PRICE)
+                .order(uuid, now(), ANY_NUMBER_OF_HOURS_TO_PAYMENT_TIMEOUT, ANY_PRICE)
                 .markTimeout(now())
                 .markChangesAsCommitted();
     }
 
     public static ShopItem withTimeoutAndPaid(UUID uuid) {
         return initialized()
-                .buy(uuid, now(), ANY_NUMBER_OF_HOURS_TO_PAYMENT_TIMEOUT, ANY_PRICE)
+                .order(uuid, now(), ANY_NUMBER_OF_HOURS_TO_PAYMENT_TIMEOUT, ANY_PRICE)
                 .markTimeout(now())
                 .pay(now())
                 .markChangesAsCommitted();

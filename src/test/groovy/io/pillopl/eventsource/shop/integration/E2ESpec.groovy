@@ -1,6 +1,6 @@
 package io.pillopl.eventsource.shop.integration
 
-import io.pillopl.eventsource.shop.domain.events.ItemBought
+import io.pillopl.eventsource.shop.domain.events.ItemOrdered
 import io.pillopl.eventsource.shop.domain.events.ItemPaid
 import io.pillopl.eventsource.shop.domain.events.ItemPaymentTimeout
 import org.springframework.beans.factory.annotation.Autowired
@@ -13,7 +13,7 @@ import spock.util.concurrent.PollingConditions
 
 import java.util.concurrent.BlockingQueue
 
-import static io.pillopl.eventsource.shop.CommandFixture.buyItemCommand
+import static io.pillopl.eventsource.shop.CommandFixture.orderItemCommand
 import static io.pillopl.eventsource.shop.CommandFixture.markPaymentTimeoutCommand
 import static io.pillopl.eventsource.shop.CommandFixture.payItemCommand
 
@@ -32,23 +32,23 @@ class E2ESpec extends IntegrationSpec {
         events = eventsCollector.forChannel(source.output())
     }
 
-    def 'received buy command should result in emitted item bought event'() {
+    def 'received order command should result in emitted item ordered event'() {
         when:
-            commands.input().send(new GenericMessage<Object>(buyItemCommand(anyUuid)))
+            commands.input().send(new GenericMessage<Object>(orderItemCommand(anyUuid)))
         then:
             conditions.eventually {
-                expectedMessageThatContains(ItemBought.TYPE)
+                expectedMessageThatContains(ItemOrdered.TYPE)
             }
     }
 
     def 'received pay command should result in emitted item paid event'() {
         when:
-            commands.input().send(new GenericMessage<Object>(buyItemCommand(anyUuid)))
+            commands.input().send(new GenericMessage<Object>(orderItemCommand(anyUuid)))
         and:
             commands.input().send(new GenericMessage<Object>(payItemCommand(anyUuid)))
         then:
             conditions.eventually {
-                expectedMessageThatContains(ItemBought.TYPE)
+                expectedMessageThatContains(ItemOrdered.TYPE)
             }
         and:
             conditions.eventually {
@@ -58,12 +58,12 @@ class E2ESpec extends IntegrationSpec {
 
     def 'received mark missing payment command should result in emitted marked as missed event'() {
         when:
-            commands.input().send(new GenericMessage<Object>(buyItemCommand(anyUuid)))
+            commands.input().send(new GenericMessage<Object>(orderItemCommand(anyUuid)))
         and:
             commands.input().send(new GenericMessage<Object>(markPaymentTimeoutCommand(anyUuid)))
         then:
             conditions.eventually {
-                expectedMessageThatContains(ItemBought.TYPE)
+                expectedMessageThatContains(ItemOrdered.TYPE)
             }
         and:
             conditions.eventually {

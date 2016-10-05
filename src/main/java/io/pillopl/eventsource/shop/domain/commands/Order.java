@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Value
-public class Buy implements Command {
+public class Order implements Command {
 
     private final UUID uuid;
     private final BigDecimal price;

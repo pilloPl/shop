@@ -2,7 +2,7 @@ package io.pillopl.eventsource.shop.domain;
 
 import com.google.common.collect.ImmutableList;
 import io.pillopl.eventsource.shop.domain.events.DomainEvent;
-import io.pillopl.eventsource.shop.domain.events.ItemBought;
+import io.pillopl.eventsource.shop.domain.events.ItemOrdered;
 import io.pillopl.eventsource.shop.domain.events.ItemPaid;
 import io.pillopl.eventsource.shop.domain.events.ItemPaymentTimeout;
 import lombok.Getter;
@@ -22,24 +22,24 @@ public class ShopItem {
     private final ImmutableList<DomainEvent> changes;
     private final ShopItemState state;
 
-    public ShopItem buy(UUID uuid, Instant when, int hoursToPaymentTimeout, BigDecimal price) {
+    public ShopItem order(UUID uuid, Instant when, int minutesToPaymentTimeout, BigDecimal price) {
         if (state == ShopItemState.INITIALIZED) {
-            return applyChange(new ItemBought(uuid, when, calculatePaymentTimeoutDate(when, hoursToPaymentTimeout), price));
+            return applyChange(new ItemOrdered(uuid, when, calculatePaymentTimeoutDate(when, minutesToPaymentTimeout), price));
         } else {
             return this;
         }
     }
 
     private Instant calculatePaymentTimeoutDate(Instant boughtAt, int hoursToPaymentTimeout) {
-        final Instant paymentTimeout = boughtAt.plus(hoursToPaymentTimeout, ChronoUnit.HOURS);
+        final Instant paymentTimeout = boughtAt.plus(hoursToPaymentTimeout, ChronoUnit.MINUTES);
         if (paymentTimeout.isBefore(boughtAt)) {
-            throw new IllegalArgumentException("Payment timeout day is before buying date!");
+            throw new IllegalArgumentException("Payment timeout day is before ordering date!");
         }
         return paymentTimeout;
     }
 
     public ShopItem pay(Instant when) {
-        throwIfStateIs(ShopItemState.INITIALIZED, "Cannot pay for not bought item");
+        throwIfStateIs(ShopItemState.INITIALIZED, "Cannot pay for not ordered item");
         if (state != ShopItemState.PAID) {
             return applyChange(new ItemPaid(uuid, when));
         } else {
@@ -50,7 +50,7 @@ public class ShopItem {
     public ShopItem markTimeout(Instant when) {
         throwIfStateIs(ShopItemState.INITIALIZED, "Payment is not missing yet");
         throwIfStateIs(ShopItemState.PAID, "Item already paid");
-        if (state == ShopItemState.BOUGHT) {
+        if (state == ShopItemState.ORDERED) {
             return applyChange(new ItemPaymentTimeout(uuid, when));
         } else {
             return this;
@@ -63,8 +63,8 @@ public class ShopItem {
         }
     }
 
-    private ShopItem apply(ItemBought event) {
-        return new ShopItem(event.getUuid(), changes, ShopItemState.BOUGHT);
+    private ShopItem apply(ItemOrdered event) {
+        return new ShopItem(event.getUuid(), changes, ShopItemState.ORDERED);
     }
 
     private ShopItem apply(ItemPaid event) {
@@ -105,8 +105,8 @@ public class ShopItem {
     private ShopItem apply(DomainEvent event) {
         if (event instanceof ItemPaid) {
             return this.apply((ItemPaid) event);
-        } else if (event instanceof ItemBought) {
-            return this.apply((ItemBought) event);
+        } else if (event instanceof ItemOrdered) {
+            return this.apply((ItemOrdered) event);
         } else if (event instanceof ItemPaymentTimeout) {
             return this.apply((ItemPaymentTimeout) event);
         } else {

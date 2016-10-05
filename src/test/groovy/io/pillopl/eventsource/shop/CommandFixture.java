@@ -1,7 +1,7 @@
 package io.pillopl.eventsource.shop;
 
 
-import io.pillopl.eventsource.shop.domain.commands.Buy;
+import io.pillopl.eventsource.shop.domain.commands.Order;
 import io.pillopl.eventsource.shop.domain.commands.MarkPaymentTimeout;
 import io.pillopl.eventsource.shop.domain.commands.Pay;
 
@@ -13,12 +13,12 @@ import static java.time.Instant.now;
 
 public class CommandFixture {
 
-    public static Buy buyItemCommand(UUID uuid) {
-        return new Buy(uuid, ZERO, now());
+    public static Order orderItemCommand(UUID uuid) {
+        return new Order(uuid, ZERO, now());
     }
 
-    public static Buy buyItemCommand(UUID uuid, Instant when) {
-        return new Buy(uuid, ZERO, when);
+    public static Order orderItemCommand(UUID uuid, Instant when) {
+        return new Order(uuid, ZERO, when);
     }
 
     public static Pay payItemCommand(UUID uuid) {

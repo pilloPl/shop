@@ -2,7 +2,7 @@ package io.pillopl.eventsource.shop.boundary;
 
 import io.pillopl.eventsource.shop.domain.ShopItem;
 import io.pillopl.eventsource.shop.domain.ShopItemRepository;
-import io.pillopl.eventsource.shop.domain.commands.Buy;
+import io.pillopl.eventsource.shop.domain.commands.Order;
 import io.pillopl.eventsource.shop.domain.commands.MarkPaymentTimeout;
 import io.pillopl.eventsource.shop.domain.commands.Pay;
 import lombok.extern.slf4j.Slf4j;
@@ -23,16 +23,16 @@ public class ShopItems {
     private final int hoursToPaymentTimeout;
 
     @Autowired
-    public ShopItems(ShopItemRepository itemRepository, @Value("${hours.to.payment.timeout:48}") int hoursToPaymentTimeout) {
+    public ShopItems(ShopItemRepository itemRepository, @Value("${minutes.to.payment.timeout:1}") int hoursToPaymentTimeout) {
         this.itemRepository = itemRepository;
         this.hoursToPaymentTimeout = hoursToPaymentTimeout;
     }
 
-    public void buy(Buy command) {
+    public void order(Order command) {
         withItem(command.getUuid(), item ->
-                item.buy(command.getUuid(), command.getWhen(), hoursToPaymentTimeout, command.getPrice())
+                item.order(command.getUuid(), command.getWhen(), hoursToPaymentTimeout, command.getPrice())
         );
-        log.info("{} item bought at {}", command.getUuid(), command.getWhen());
+        log.info("{} item ordered at {}", command.getUuid(), command.getWhen());
     }
 
     public void pay(Pay command) {

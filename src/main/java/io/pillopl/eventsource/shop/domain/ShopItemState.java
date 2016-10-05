@@ -2,7 +2,7 @@ package io.pillopl.eventsource.shop.domain;
 
 public enum ShopItemState {
     INITIALIZED,
-    BOUGHT,
+    ORDERED,
     PAID,
     PAYMENT_MISSING
 }

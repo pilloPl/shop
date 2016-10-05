@@ -1,6 +1,6 @@
 package io.pillopl.eventsource.shop.eventstore
 
-import io.pillopl.eventsource.shop.domain.events.ItemBought
+import io.pillopl.eventsource.shop.domain.events.ItemOrdered
 import io.pillopl.eventsource.shop.domain.events.ItemPaid
 import io.pillopl.eventsource.shop.domain.events.ItemPaymentTimeout
 import spock.lang.Specification
@@ -15,16 +15,16 @@ class EventSerializerSpec extends Specification {
 
     @Subject EventSerializer eventSerializer = new EventSerializer()
 
-    def "should parse ItemBought event"() {
+    def "should parse ItemOrdered event"() {
         given:
             String body = """{
-                "type": "$ItemBought.TYPE",
+                "type": "$ItemOrdered.TYPE",
                 "uuid": "${ANY_UUID.toString()}",
                 "when": "2016-05-24T12:06:41.045Z",
                 "price": "123.45"
                 }"""
         when:
-            ItemBought event = eventSerializer.deserialize(new EventDescriptor(body, now(), ANY_TYPE, ANY_UUID))
+            ItemOrdered event = eventSerializer.deserialize(new EventDescriptor(body, now(), ANY_TYPE, ANY_UUID))
         then:
             event.uuid == ANY_UUID
             event.price == 123.45

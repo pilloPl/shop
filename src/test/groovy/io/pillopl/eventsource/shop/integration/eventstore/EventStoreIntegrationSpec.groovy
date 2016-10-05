@@ -1,7 +1,7 @@
 package io.pillopl.eventsource.shop.integration.eventstore
 
 import io.pillopl.eventsource.shop.boundary.ShopItems
-import io.pillopl.eventsource.shop.domain.events.ItemBought
+import io.pillopl.eventsource.shop.domain.events.ItemOrdered
 import io.pillopl.eventsource.shop.domain.events.ItemPaid
 import io.pillopl.eventsource.shop.domain.events.ItemPaymentTimeout
 import io.pillopl.eventsource.shop.integration.IntegrationSpec
@@ -20,69 +20,69 @@ class EventStoreIntegrationSpec extends IntegrationSpec {
 
     @Autowired EventStore eventStore
 
-    def 'should store item bought event when create bought item command comes and no item yet'() {
+    def 'should store item ordered event when create bought item command comes and no item yet'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
         then:
             Optional<EventStream> eventStream = eventStore.findByAggregateUUID(uuid)
             eventStream.isPresent()
-            eventStream.get().getEvents()*.type == [ItemBought.TYPE]
+            eventStream.get().getEvents()*.type == [ItemOrdered.TYPE]
     }
 
     def 'should store item paid event when paying for existing item'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
             shopItems.pay(payItemCommand(uuid))
         then:
             Optional<EventStream> eventStream = eventStore.findByAggregateUUID(uuid)
             eventStream.isPresent()
-            eventStream.get().getEvents()*.type == [ItemBought.TYPE, ItemPaid.TYPE]
+            eventStream.get().getEvents()*.type == [ItemOrdered.TYPE, ItemPaid.TYPE]
     }
 
     def 'should store item paid event when receiving missed payment'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
             shopItems.markPaymentTimeout(markPaymentTimeoutCommand(uuid))
             shopItems.pay(payItemCommand(uuid))
         then:
             Optional<EventStream> eventStream = eventStore.findByAggregateUUID(uuid)
             eventStream.isPresent()
             eventStream.get().getEvents()*.type ==
-                    [ItemBought.TYPE, ItemPaymentTimeout.TYPE, ItemPaid.TYPE]
+                    [ItemOrdered.TYPE, ItemPaymentTimeout.TYPE, ItemPaid.TYPE]
 
     }
 
-    def 'buying an item should be idempoten - should store only 1 event'() {
+    def 'ordering an item should be idempotent - should store only 1 event'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
         then:
             Optional<EventStream> eventStream = eventStore.findByAggregateUUID(uuid)
             eventStream.isPresent()
-            eventStream.get().getEvents()*.type == [ItemBought.TYPE]
+            eventStream.get().getEvents()*.type == [ItemOrdered.TYPE]
 
     }
 
     def 'marking payment as missing should be idempotent - should store only 1 event'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
             shopItems.markPaymentTimeout(markPaymentTimeoutCommand(uuid))
             shopItems.markPaymentTimeout(markPaymentTimeoutCommand(uuid))
         then:
             Optional<EventStream> eventStream = eventStore.findByAggregateUUID(uuid)
             eventStream.isPresent()
-            eventStream.get().getEvents()*.type == [ItemBought.TYPE, ItemPaymentTimeout.TYPE]
+            eventStream.get().getEvents()*.type == [ItemOrdered.TYPE, ItemPaymentTimeout.TYPE]
     }
 
-    def 'paying should be idempotent - - should store only 1 event'() {
+    def 'paying should be idempotent - should store only 1 event'() {
         when:
-            shopItems.buy(buyItemCommand(uuid))
+            shopItems.order(orderItemCommand(uuid))
             shopItems.pay(payItemCommand(uuid))
             shopItems.pay(payItemCommand(uuid))
         then:
             Optional<EventStream> eventStream = eventStore.findByAggregateUUID(uuid)
             eventStream.isPresent()
-            eventStream.get().getEvents()*.type == [ItemBought.TYPE, ItemPaid.TYPE]
+            eventStream.get().getEvents()*.type == [ItemOrdered.TYPE, ItemPaid.TYPE]
     }
 
 }
