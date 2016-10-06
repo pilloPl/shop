@@ -13,10 +13,6 @@ import spock.util.concurrent.PollingConditions
 
 import java.util.concurrent.BlockingQueue
 
-import static io.pillopl.eventsource.shop.CommandFixture.orderItemCommand
-import static io.pillopl.eventsource.shop.CommandFixture.markPaymentTimeoutCommand
-import static io.pillopl.eventsource.shop.CommandFixture.payItemCommand
-
 class E2ESpec extends IntegrationSpec {
 
     private UUID anyUuid = UUID.randomUUID()
@@ -34,8 +30,8 @@ class E2ESpec extends IntegrationSpec {
 
     def 'received order command should result in emitted item ordered event'() {
         when:
-            commands.input().send(new GenericMessage<Object>(orderItemCommand(anyUuid)))
-        then:
+            commands.input().send(new GenericMessage<>(sampleOrderInJson(anyUuid)))
+       then:
             conditions.eventually {
                 expectedMessageThatContains(ItemOrdered.TYPE)
             }
@@ -43,9 +39,9 @@ class E2ESpec extends IntegrationSpec {
 
     def 'received pay command should result in emitted item paid event'() {
         when:
-            commands.input().send(new GenericMessage<Object>(orderItemCommand(anyUuid)))
+            commands.input().send(new GenericMessage<>(sampleOrderInJson(anyUuid)))
         and:
-            commands.input().send(new GenericMessage<Object>(payItemCommand(anyUuid)))
+            commands.input().send(new GenericMessage<>(samplePayInJson(anyUuid)))
         then:
             conditions.eventually {
                 expectedMessageThatContains(ItemOrdered.TYPE)
@@ -58,9 +54,9 @@ class E2ESpec extends IntegrationSpec {
 
     def 'received mark missing payment command should result in emitted marked as missed event'() {
         when:
-            commands.input().send(new GenericMessage<Object>(orderItemCommand(anyUuid)))
+            commands.input().send(new GenericMessage<>(sampleOrderInJson(anyUuid)))
         and:
-            commands.input().send(new GenericMessage<Object>(markPaymentTimeoutCommand(anyUuid)))
+            commands.input().send(new GenericMessage<>(sampleMarkTimeoutInJson(anyUuid)))
         then:
             conditions.eventually {
                 expectedMessageThatContains(ItemOrdered.TYPE)
@@ -69,6 +65,18 @@ class E2ESpec extends IntegrationSpec {
             conditions.eventually {
                 expectedMessageThatContains(ItemPaymentTimeout.TYPE)
             }
+    }
+
+    private static String sampleOrderInJson(UUID uuid) {
+        return "{\"type\":\"item.order\",\"uuid\":\"$uuid\",\"when\":\"2016-10-06T10:28:23.956Z\"}"
+    }
+
+    private static String samplePayInJson(UUID uuid) {
+        return "{\"type\":\"item.pay\",\"uuid\":\"$uuid\",\"when\":\"2016-10-06T10:28:23.956Z\"}"
+    }
+
+    private static String sampleMarkTimeoutInJson(UUID uuid) {
+        return "{\"type\":\"item.markPaymentTimeout\",\"uuid\":\"$uuid\",\"when\":\"2016-10-06T10:28:23.956Z\"}"
     }
 
     void expectedMessageThatContains(String text) {

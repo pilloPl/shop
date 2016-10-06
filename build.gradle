@@ -19,9 +19,10 @@ apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'spring-boot'
 
+
 dependencyManagement {
     imports {
-        mavenBom 'org.springframework.cloud:spring-cloud-stream-dependencies:1.0.2.RELEASE'
+        mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Camden.RELEASE'
     }
 }
 
@@ -52,9 +53,10 @@ dependencies {
     runtime 'cglib:cglib-nodep:3.2.1'
     runtime 'com.h2database:h2'
 
+    testCompile 'org.springframework.cloud:spring-cloud-stream-test-support-internal:1.1.0.RELEASE'
+
     testCompile 'org.springframework.boot:spring-boot-starter-test'
     testCompile 'org.spockframework:spock-spring'
-    testCompile 'org.springframework.cloud:spring-cloud-stream-test-support-internal'
     testCompile 'org.springframework.cloud:spring-cloud-stream-test-support'
 
 }
