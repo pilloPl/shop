@@ -6,7 +6,7 @@ import io.pillopl.eventsource.shop.domain.events.ItemOrdered;
 import io.pillopl.eventsource.shop.domain.events.ItemPaid;
 import io.pillopl.eventsource.shop.domain.events.ItemPaymentTimeout;
 import lombok.Getter;
-import lombok.Value;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -14,10 +14,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
-@Value
+@RequiredArgsConstructor
+@Getter
 public class ShopItem {
 
-    @Getter
     private final UUID uuid;
     private final ImmutableList<DomainEvent> changes;
     private final ShopItemState state;
@@ -63,6 +63,16 @@ public class ShopItem {
         }
     }
 
+    public static ShopItem from(UUID uuid, List<DomainEvent> history) {
+        return history
+                .stream()
+                .reduce(
+                        new ShopItem(uuid, ImmutableList.of(), ShopItemState.INITIALIZED),
+                        (tx, event) -> tx.applyChange(event, false),
+                        (t1, t2) -> {throw new UnsupportedOperationException();}
+                );
+    }
+
     private ShopItem apply(ItemOrdered event) {
         return new ShopItem(event.getUuid(), changes, ShopItemState.ORDERED);
     }
@@ -73,16 +83,6 @@ public class ShopItem {
 
     private ShopItem apply(ItemPaymentTimeout event) {
         return new ShopItem(event.getUuid(), changes, ShopItemState.PAYMENT_MISSING);
-    }
-
-    public static ShopItem from(UUID uuid, List<DomainEvent> history) {
-        return history
-                .stream()
-                .reduce(
-                        new ShopItem(uuid, ImmutableList.of(), ShopItemState.INITIALIZED),
-                        (tx, event) -> tx.applyChange(event, false),
-                        (t1, t2) -> {throw new UnsupportedOperationException();}
-                );
     }
 
     private ShopItem applyChange(DomainEvent event, boolean isNew) {
