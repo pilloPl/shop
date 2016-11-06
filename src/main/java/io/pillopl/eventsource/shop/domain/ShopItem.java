@@ -127,7 +127,7 @@ public class ShopItem {
     }
 
     public ShopItem markChangesAsCommitted() {
-        return new ShopItem(uuid, ImmutableList.of(), state);
+        return this.withChanges(ImmutableList.of());
     }
 
 }
