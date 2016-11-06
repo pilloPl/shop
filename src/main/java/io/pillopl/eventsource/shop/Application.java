@@ -15,6 +15,12 @@ import org.springframework.cloud.stream.messaging.Processor;
 import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Random;
+import java.util.UUID;
 
 @SpringBootApplication
 @EnableAspectJAutoProxy(proxyTargetClass = true)
@@ -23,12 +29,24 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Slf4j
 public class Application {
 
+    Random rand = new Random();
+
     @Autowired
     ShopItems shopItems;
 
     public static void main(String[] args) {
         SpringApplication application = new SpringApplication(Application.class);
         application.run(args);
+    }
+
+    @Scheduled(fixedRate = 5000)
+    public void randomOrders() {
+        UUID uuid = UUID.randomUUID();
+        shopItems.order(new Order(uuid, new BigDecimal(rand.nextInt() % 100), Instant.now()));
+        if(rand.nextBoolean()) {
+            shopItems.pay(new Pay(uuid, Instant.now()));
+
+        }
     }
 
     @StreamListener(Sink.INPUT)
