@@ -7,6 +7,7 @@ import io.pillopl.eventsource.shop.domain.events.ItemPaid;
 import io.pillopl.eventsource.shop.domain.events.ItemPaymentTimeout;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.Wither;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -16,11 +17,25 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @Getter
+@Wither
 public class ShopItem {
 
     private final UUID uuid;
     private final ImmutableList<DomainEvent> changes;
     private final ShopItemState state;
+
+    public ShopItem pay(Instant when) {
+        throwIfStateIs(ShopItemState.INITIALIZED, "Cannot pay for not ordered item");
+        if (state != ShopItemState.PAID) {
+            return applyChange(new ItemPaid(uuid, when));
+        } else {
+            return this;
+        }
+    }
+
+    private ShopItem apply(ItemPaid event) {
+        return this.withState(ShopItemState.PAID);
+    }
 
     public ShopItem order(UUID uuid, Instant when, int minutesToPaymentTimeout, BigDecimal price) {
         if (state == ShopItemState.INITIALIZED) {
@@ -36,15 +51,6 @@ public class ShopItem {
             throw new IllegalArgumentException("Payment timeout day is before ordering date!");
         }
         return paymentTimeout;
-    }
-
-    public ShopItem pay(Instant when) {
-        throwIfStateIs(ShopItemState.INITIALIZED, "Cannot pay for not ordered item");
-        if (state != ShopItemState.PAID) {
-            return applyChange(new ItemPaid(uuid, when));
-        } else {
-            return this;
-        }
     }
 
     public ShopItem markTimeout(Instant when) {
@@ -74,15 +80,13 @@ public class ShopItem {
     }
 
     private ShopItem apply(ItemOrdered event) {
-        return new ShopItem(event.getUuid(), changes, ShopItemState.ORDERED);
-    }
-
-    private ShopItem apply(ItemPaid event) {
-        return new ShopItem(event.getUuid(), changes, ShopItemState.PAID);
+        return this
+                .withUuid(event.getUuid())
+                .withState(ShopItemState.ORDERED);
     }
 
     private ShopItem apply(ItemPaymentTimeout event) {
-        return new ShopItem(event.getUuid(), changes, ShopItemState.PAYMENT_MISSING);
+        return this.withState(ShopItemState.PAYMENT_MISSING);
     }
 
     private ShopItem applyChange(DomainEvent event, boolean isNew) {
